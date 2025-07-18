@@ -24,17 +24,11 @@ public class PolicySignal {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "type", nullable = false)
-    private String type;
-
     @Column(name = "message", nullable = false)
     private String message;
 
-    @Column(name = "policy_id")
+    @Column(name = "policy_id", nullable = false)
     private Long policyId;
-
-    @Column(name = "report_id")
-    private Long reportId;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
