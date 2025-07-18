@@ -7,7 +7,6 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -23,9 +22,6 @@ public class DailyReport {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "report_id")
     private Long reportId;
-
-    @Column(name = "report_date", nullable = false)
-    private LocalDate reportDate;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;

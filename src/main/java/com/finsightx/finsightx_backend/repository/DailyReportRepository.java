@@ -9,6 +9,6 @@ import java.util.List;
 @Repository
 public interface DailyReportRepository extends JpaRepository<DailyReport, Integer> {
 
-    List<DailyReport> findByOrderByReportDateDesc();
+    List<DailyReport> findByOrderByCreatedAtDesc();
 
 }
