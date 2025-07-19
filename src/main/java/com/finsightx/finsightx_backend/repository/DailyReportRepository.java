@@ -13,8 +13,6 @@ public interface DailyReportRepository extends JpaRepository<DailyReport, Long> 
 
     List<DailyReport> findByOrderByCreatedAtDesc();
 
-    List<DailyReport> findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(String titleKeyword, String contentKeyword);
-
     @Query(value = "SELECT DISTINCT dr FROM DailyReport dr " +
             "LEFT JOIN PolicyInfo pi ON EXISTS (SELECT 1 FROM jsonb_array_elements_text(dr.policies) AS elem WHERE elem = pi.policy_id::text) " +
             "LEFT JOIN Stock s ON " +

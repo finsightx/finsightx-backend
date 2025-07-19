@@ -1,6 +1,5 @@
 package com.finsightx.finsightx_backend.dto.response;
 
-import com.finsightx.finsightx_backend.domain.PolicyInfo;
 import lombok.Getter;
 import lombok.Setter;
 
