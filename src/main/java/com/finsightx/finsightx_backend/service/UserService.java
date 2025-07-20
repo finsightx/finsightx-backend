@@ -3,14 +3,13 @@ package com.finsightx.finsightx_backend.service;
 import com.finsightx.finsightx_backend.domain.PortfolioItem;
 import com.finsightx.finsightx_backend.domain.Stock;
 import com.finsightx.finsightx_backend.domain.User;
+import com.finsightx.finsightx_backend.dto.response.PortfolioItemResponse;
 import com.finsightx.finsightx_backend.repository.StockRepository;
 import com.finsightx.finsightx_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,13 +24,13 @@ public class UserService {
     }
 
     public List<PortfolioItem> getUserPortfolio(Long userId) {
-        return userRepository.findById(userId)
+        return getUserById(userId)
                 .map(User::getPortfolio)
                 .orElseThrow(() -> new IllegalArgumentException("User ID " + userId + "를 찾을 수 없습니다."));
     }
 
     public List<PortfolioItem> findPortfolioStocksByIndustryCode(Long userId, String industryCode) {
-        User user = userRepository.findById(userId)
+        User user = getUserById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User ID " + userId + "를 찾을 수 없습니다."));
 
         List<PortfolioItem> userPortfolio = user.getPortfolio();
@@ -39,11 +38,50 @@ public class UserService {
             return new ArrayList<>();
         }
 
+        List<String> portfolioStockCodes = userPortfolio.stream()
+                .map(PortfolioItem::getStockCode)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<String, Stock> stockMap = stockRepository.findByStockCodeIn(portfolioStockCodes).stream()
+                .collect(Collectors.toMap(Stock::getStockCode, stock -> stock));
+
         return userPortfolio.stream()
                 .filter(item -> {
-                    Optional<Stock> stockOptional = stockRepository.findByStockCode(item.getStockCode());
-                    return stockOptional.map(stock -> stock.getIndustryCode().equals(industryCode)).orElse(false);
+                    Stock stock = stockMap.get(item.getStockCode());
+                    return stock != null && stock.getIndustryCode().equals(industryCode);
                 })
+                .collect(Collectors.toList());
+    }
+
+    public List<PortfolioItemResponse> getMyAssetsAsDto(Long userId) {
+        List<PortfolioItem> rawPortfolio = getUserPortfolio(userId);
+        if (rawPortfolio.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> stockCodes = rawPortfolio.stream()
+                .map(PortfolioItem::getStockCode)
+                .distinct()
+                .toList();
+
+        Map<String, Stock> stockMap = stockRepository.findByStockCodeIn(stockCodes).stream()
+                .collect(Collectors.toMap(Stock::getStockCode, stock -> stock));
+
+        return rawPortfolio.stream()
+                .map(item -> {
+                    Stock stock = stockMap.get(item.getStockCode());
+                    if (stock != null) {
+                        return new PortfolioItemResponse(
+                                stock.getStockName(),
+                                item.getQuantity(),
+                                stock.getIndustryName()
+                        );
+                    } else {
+                        return null;
+                    }
+                })
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toList());
     }
 

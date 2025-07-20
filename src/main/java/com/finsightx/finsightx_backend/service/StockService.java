@@ -22,4 +22,10 @@ public class StockService {
         return stockRepository.findByIndustryCode(industryCode);
     }
 
+    public Optional<String> getIndustryNameByCode(String industryCode) {
+        return stockRepository.findByIndustryCode(industryCode).stream()
+                .map(Stock::getIndustryName)
+                .findFirst();
+    }
+
 }

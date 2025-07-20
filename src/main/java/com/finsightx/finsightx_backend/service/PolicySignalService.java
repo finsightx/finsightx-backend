@@ -2,20 +2,26 @@ package com.finsightx.finsightx_backend.service;
 
 
 import com.finsightx.finsightx_backend.domain.PolicySignal;
+import com.finsightx.finsightx_backend.dto.response.PolicyInfoResponse;
+import com.finsightx.finsightx_backend.dto.response.PolicySignalListItemResponse;
+import com.finsightx.finsightx_backend.dto.response.PolicySignalResponse;
 import com.finsightx.finsightx_backend.repository.PolicySignalRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class PolicySignalService {
 
     private final PolicySignalRepository policySignalRepository;
+    private final PolicyInfoService policyInfoService;
 
     public Optional<PolicySignal> getPolicySignalById(Long policySignalId) {
         return policySignalRepository.findById(policySignalId);
@@ -41,10 +47,84 @@ public class PolicySignalService {
 
     @Transactional
     public PolicySignal markPolicySignalAsRead(Long policySignalId) {
-        PolicySignal policySignal = policySignalRepository.findById(policySignalId)
+        PolicySignal policySignal = getPolicySignalById(policySignalId)
                 .orElseThrow(() -> new IllegalArgumentException("Policy Signal ID " + policySignalId + "를 찾을 수 없습니다."));
         policySignal.setIsRead(true);
         return policySignalRepository.save(policySignal);
+    }
+
+    public List<PolicySignalListItemResponse> getUserPolicySignalsAsDto(Long userId) {
+        List<PolicySignal> signals = getUserPolicySignals(userId);
+
+        if (signals.isEmpty()) return Collections.emptyList();
+
+        return signals.stream()
+                .map(signal -> {
+                    // toPolicySignalListItemResponse는 PolicyInfo 상세를 포함하지 않으므로 Map을 직접 사용하지 않아도 됨.
+                    // stockNames는 이미 엔티티에 저장되어 있다고 가정.
+                    return new PolicySignalListItemResponse(
+                            signal.getPolicySignalId(),
+                            signal.getMessage(),
+                            signal.getPolicyId(),
+                            signal.getCreatedAt(),
+                            signal.getIsRead(),
+                            signal.getStockNames()
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    public Optional<PolicySignalResponse> getPolicySignalDetailAsDto(Long policySignalId) {
+        return getPolicySignalById(policySignalId)
+                .map(signal -> {
+                    PolicyInfoResponse policyInfoResponse = null;
+                    if (signal.getPolicyId() != null) {
+                        policyInfoResponse = policyInfoService.getPolicyInfoById(signal.getPolicyId())
+                                .map(policyInfoService::toPolicyInfoResponse)
+                                .orElse(null);
+                    }
+                    return new PolicySignalResponse(
+                            signal.getPolicySignalId(),
+                            signal.getMessage(),
+                            policyInfoResponse,
+                            signal.getStockNames()
+                    );
+                });
+    }
+
+    @Transactional
+    public PolicySignalListItemResponse markPolicySignalAsReadAndGetDto(Long policySignalId) {
+        PolicySignal updatedSignal = markPolicySignalAsRead(policySignalId);
+        return new PolicySignalListItemResponse(
+                updatedSignal.getPolicySignalId(),
+                updatedSignal.getMessage(),
+                updatedSignal.getPolicyId(),
+                updatedSignal.getCreatedAt(),
+                updatedSignal.getIsRead(),
+                updatedSignal.getStockNames()
+        );
+    }
+
+    public PolicySignalListItemResponse toPolicySignalListItemResponse(PolicySignal signal) {
+        return new PolicySignalListItemResponse(
+                signal.getPolicySignalId(),
+                signal.getMessage(),
+                signal.getPolicyId(),
+                signal.getCreatedAt(),
+                signal.getIsRead(),
+                signal.getStockNames()
+        );
+    }
+
+    public PolicySignalResponse toPolicySignalResponse(PolicySignal signal) {
+        return new PolicySignalResponse(
+                signal.getPolicySignalId(),
+                signal.getMessage(),
+                policyInfoService.getPolicyInfoById(signal.getPolicyId())
+                        .map(policyInfoService::toPolicyInfoResponse)
+                        .orElse(null),
+                signal.getStockNames()
+        );
     }
 
 }
