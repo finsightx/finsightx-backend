@@ -213,6 +213,12 @@ public class DailyReportService {
                 });
     }
 
+    public List<DailyReportListItemResponse> searchDailyReportsAsDto(String keyword) {
+        List<DailyReport> reports = searchDailyReportsByKeyword(keyword);
+
+        return mapReportsToDailyReportListItemResponses(reports);
+    }
+
 
     public DailyReportListItemResponse toDailyReportListItemResponse(DailyReport report) {
         Set<String> industryNames = new HashSet<>();
@@ -279,12 +285,6 @@ public class DailyReportService {
                 new ArrayList<>(industryNames),
                 new ArrayList<>(stockNames)
         );
-    }
-
-    public List<DailyReportListItemResponse> searchDailyReportsAsDto(String keyword) {
-        List<DailyReport> reports = searchDailyReportsByKeyword(keyword);
-
-        return mapReportsToDailyReportListItemResponses(reports);
     }
 
     private List<DailyReportListItemResponse> mapReportsToDailyReportListItemResponses(List<DailyReport> reports) {
