@@ -20,8 +20,8 @@ public class DailyReportListItemResponse {
 
     private OffsetDateTime createdAt;
 
-    private List<String> industries;
+    private List<String> industryNames;
 
-    private List<String> stocks;
+    private List<String> stockNames;
 
 }
