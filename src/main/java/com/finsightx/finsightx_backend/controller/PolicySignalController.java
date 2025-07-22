@@ -24,7 +24,7 @@ public class PolicySignalController {
 
     @GetMapping("/{policySignalId}")
     public ResponseEntity<PolicySignalResponse> getPolicySignalById(@PathVariable Long policySignalId) {
-        return policySignalService.getPolicySignalDetailAsDto(policySignalId)
+        return policySignalService.getPolicySignalAsDto(policySignalId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

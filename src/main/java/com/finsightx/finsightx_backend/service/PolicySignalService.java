@@ -33,11 +33,11 @@ public class PolicySignalService {
 
     // TODO: Check
     @Transactional
-    public PolicySignal createPolicySignal(Long userId, Long policyId, String message, List<String> stockNames) {
+    public PolicySignal createPolicySignal(Long userId, String message, Long policyId, List<String> stockNames) {
         PolicySignal policySignal = new PolicySignal();
         policySignal.setUserId(userId);
-        policySignal.setPolicyId(policyId);
         policySignal.setMessage(message);
+        policySignal.setPolicyId(policyId);
         policySignal.setCreatedAt(OffsetDateTime.now());
         policySignal.setIsRead(false);
         policySignal.setStockNames(stockNames);
@@ -74,7 +74,7 @@ public class PolicySignalService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<PolicySignalResponse> getPolicySignalDetailAsDto(Long policySignalId) {
+    public Optional<PolicySignalResponse> getPolicySignalAsDto(Long policySignalId) {
         return getPolicySignalById(policySignalId)
                 .map(signal -> {
                     PolicyInfoResponse policyInfoResponse = null;
