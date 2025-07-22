@@ -28,4 +28,8 @@ public class StockService {
                 .findFirst();
     }
 
+    public List<Stock> getStocksByStockCodeIn(List<String> stockCodes) {
+        return stockRepository.findByStockCodeIn(stockCodes);
+    }
+
 }

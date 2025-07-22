@@ -19,6 +19,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
 
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
     public Optional<User> getUserById(Long userId) {
         return userRepository.findById(userId);
     }
