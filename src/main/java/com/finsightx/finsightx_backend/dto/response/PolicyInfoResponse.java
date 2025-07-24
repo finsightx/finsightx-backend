@@ -24,7 +24,7 @@ public class PolicyInfoResponse {
 
     private String summary;
 
-    private String content;
+    private List<String> content;
 
     private List<IndustryResponse> positiveIndustries;
 

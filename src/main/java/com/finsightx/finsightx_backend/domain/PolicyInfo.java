@@ -35,8 +35,9 @@ public class PolicyInfo {
     @Column(name = "summary", nullable = false)
     private String summary;
 
-    @Column(name = "content", nullable = false)
-    private String content;
+    @Column(name = "content", columnDefinition = "jsonb", nullable = false)
+    @Convert(converter = JsonbStringListConverter.class)
+    private List<String> content;
 
     @Column(name = "positive_industries", columnDefinition = "jsonb", nullable = false)
     @Convert(converter = JsonbStringListConverter.class)

@@ -21,7 +21,7 @@ public class LlmPolicyAnalysisResponse {
 
     private String summary;
 
-    private String content;
+    private List<String> content;
 
     // List<String>: 업종/종목 코드 리스트
     private List<String> positiveIndustries;
@@ -31,10 +31,5 @@ public class LlmPolicyAnalysisResponse {
     private List<String> positiveStocks;
 
     private List<String> negativeStocks;
-
-    // TODO
-    private double confidenceScore;
-
-    private String rawLlmOutput;
 
 }
