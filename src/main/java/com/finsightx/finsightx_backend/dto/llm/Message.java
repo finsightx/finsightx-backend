@@ -5,20 +5,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LlmPolicyAnalysisRequest {
+public class Message {
 
-    private ArrayList<Message> messages;
+    private ROLE role;
 
-    private double temperature;
+    private String content;
 
-    private int maxTokens;
-
-    private double repeatPenalty;
-
+    public enum ROLE {
+        system, user, assistant
+    }
 }

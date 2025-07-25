@@ -13,23 +13,65 @@ import java.util.List;
 @AllArgsConstructor
 public class LlmPolicyAnalysisResponse {
 
-    private boolean isPolicyChange;
+    private Status status;
 
-    private String policyName;
+    private Result result;
 
-    private String stage;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Status {
+        private String code;
+        private String message;
+    }
 
-    private String summary;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Result {
+        private Long created;
+        private Usage usage;
+        private Message message;
+        private Long seed;
+        private List<AiFilter> aiFilter;
+    }
 
-    private List<String> content;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Usage {
+        private int completionTokens;
+        private int promptTokens;
+        private int totalTokens;
+    }
 
-    // List<String>: 업종/종목 코드 리스트
-    private List<String> positiveIndustries;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AiFilter {
+        private String groupName;
+        private String name;
+        private String score;
+    }
 
-    private List<String> negativeIndustries;
-
-    private List<String> positiveStocks;
-
-    private List<String> negativeStocks;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PolicyInfoFromLlm {
+        private boolean isPolicyChange;
+        private String policyName;
+        private String stage;
+        private String summary;
+        private List<String> content;
+        private List<String> positiveIndustries;
+        private List<String> negativeIndustries;
+        private List<String> positiveStocks;
+        private List<String> negativeStocks;
+    }
 
 }

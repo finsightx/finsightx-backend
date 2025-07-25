@@ -12,6 +12,8 @@ public interface StockRepository extends JpaRepository<Stock, Integer> {
 
     Optional<Stock> findByStockCode(String stockCode);
 
+    Optional<Stock> findByStockName(String stockName);
+
     List<Stock> findByIndustryCode(String industryCode);
 
     List<Stock> findByStockCodeIn(List<String> stockCodes);

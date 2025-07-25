@@ -14,6 +14,8 @@ public class StockService {
 
     private final StockRepository stockRepository;
 
+    public List<Stock> findAll() {return stockRepository.findAll();}
+
     public Optional<Stock> getStockByStockCode(String stockCode) {
         return stockRepository.findByStockCode(stockCode);
     }
