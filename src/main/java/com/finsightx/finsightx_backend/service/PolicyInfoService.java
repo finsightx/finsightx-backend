@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,11 +39,10 @@ public class PolicyInfoService {
         return policyInfoRepository.findByCreatedAtBetween(start, end);
     }
 
-    // TODO: Check
     @Transactional
     public PolicyInfo savePolicyInfo(PolicyInfo policyInfo) {
         if (policyInfo.getCreatedAt() == null) {
-            policyInfo.setCreatedAt(OffsetDateTime.now());
+            policyInfo.setCreatedAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")));
         }
         return policyInfoRepository.save(policyInfo);
     }

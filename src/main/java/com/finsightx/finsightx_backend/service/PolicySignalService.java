@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -31,14 +32,13 @@ public class PolicySignalService {
         return policySignalRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
-    // TODO: Check
     @Transactional
     public PolicySignal createPolicySignal(Long userId, String message, Long policyId, List<String> stockNames) {
         PolicySignal policySignal = new PolicySignal();
         policySignal.setUserId(userId);
         policySignal.setMessage(message);
         policySignal.setPolicyId(policyId);
-        policySignal.setCreatedAt(OffsetDateTime.now());
+        policySignal.setCreatedAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")));
         policySignal.setIsRead(false);
         policySignal.setStockNames(stockNames);
 

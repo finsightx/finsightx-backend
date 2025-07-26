@@ -208,7 +208,6 @@ public class PolicyNewsService {
             if (policyInfo != null) {
                 log.info("LLM determined as policy change news and PolicyInfo processing complete: {}", policyInfo.getPolicyName());
 
-                // TODO: Check savePolicyInfo()
                 policyInfo = policyInfoService.savePolicyInfo(policyInfo);
 
                 log.info("PolicyInfo saved: ID {}", policyInfo.getPolicyId());
