@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LlmPolicyAnalysisResponse {
+public class LlmResponse {
 
     private Status status;
 

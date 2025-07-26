@@ -198,11 +198,12 @@ public class PolicyNewsService {
 
         log.info("Start processing {} newly approved news items.", newNewsItems.size());
 
+        List<Stock> allStocks = stockService.findAll();
+        Map<String, String> stockNameToCodeMap = allStocks.stream()
+                .collect(Collectors.toMap(Stock::getStockName, Stock::getStockCode, (existing, replacement) -> existing));
+
         for (PolicyNewsItem newsItem : newNewsItems) {
-            //TODO
-            // LLM에게 정책 변화 판단 및 가공 요청 (PolicyInfo 엔티티 반환)
-            PolicyInfo policyInfo = llmAnalysisService.analyzePolicyNewsWithLlm(newsItem);
-            // PolicyInfo policyInfo = llmAnalysisService.analyzePolicyNewsWithLlmMock(newsItem);
+            PolicyInfo policyInfo = llmAnalysisService.analyzePolicyNewsWithLlm(newsItem, stockNameToCodeMap);
 
             if (policyInfo != null) {
                 log.info("LLM determined as policy change news and PolicyInfo processing complete: {}", policyInfo.getPolicyName());
@@ -216,6 +217,8 @@ public class PolicyNewsService {
             } else {
                 log.info("LLM determined it's general news or unsuitable for PolicyInfo processing. News Title: {}", newsItem.getTitle());
             }
+            // TODO: Test
+            break;
         }
 
         lastProcessedNewsTime = now;

@@ -10,11 +10,20 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-    @Bean
-    public WebClient webClient(@Value("${api.llm.endpoint}") String apiUrl) {
+    @Bean(name = "llmAnalysisWebClient")
+    public WebClient llmAnalysisWebClient(@Value("${api.llm.analysis.endpoint}") String apiUrl) {
         return WebClient.builder()
                 .baseUrl(apiUrl)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
+
+    @Bean(name = "llmChatbotWebClient")
+    public WebClient llmChatbotWebClient(@Value("${api.llm.chatbot.endpoint}") String apiUrl) {
+        return WebClient.builder()
+                .baseUrl(apiUrl)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+    }
+
 }

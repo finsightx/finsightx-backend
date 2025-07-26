@@ -3,12 +3,12 @@ package com.finsightx.finsightx_backend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finsightx.finsightx_backend.domain.PolicyInfo;
-import com.finsightx.finsightx_backend.dto.llm.LlmPolicyAnalysisRequest;
-import com.finsightx.finsightx_backend.dto.llm.LlmPolicyAnalysisResponse;
+import com.finsightx.finsightx_backend.dto.llm.LlmRequest;
+import com.finsightx.finsightx_backend.dto.llm.LlmResponse;
 import com.finsightx.finsightx_backend.dto.llm.Message;
 import com.finsightx.finsightx_backend.dto.policyNewsApi.PolicyNewsItem;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -19,7 +19,6 @@ import java.time.ZoneId;
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class LlmAnalysisService {
 
@@ -27,11 +26,16 @@ public class LlmAnalysisService {
 
     private final ObjectMapper objectMapper;
 
+    public LlmAnalysisService(@Qualifier("llmAnalysisWebClient") WebClient webClient, ObjectMapper objectMapper) {
+        this.webClient = webClient;
+        this.objectMapper = objectMapper;
+    }
+
     private static final List<String> VALID_POLICY_STAGES = Arrays.asList(
             "기획", "제안", "심의/검토", "확정/공포", "시행"
     );
 
-    @Value("${api.llm.endpoint}")
+    @Value("${api.llm.analysis.endpoint}")
     private String llmApiEndpoint;
 
     @Value("${api.llm.key}")
@@ -113,7 +117,7 @@ public class LlmAnalysisService {
                 "\n부제목: " + newsItem.getSubTitle1() +
                 "\n내용: " + newsItem.getDataContents();
 
-        LlmPolicyAnalysisRequest request = new LlmPolicyAnalysisRequest();
+        LlmRequest request = new LlmRequest();
         request.setMessages(new ArrayList<>());
         request.getMessages().add(new Message(Message.ROLE.system, systemPrompt));
         request.getMessages().add(new Message(Message.ROLE.user, userPrompt));
@@ -121,7 +125,7 @@ public class LlmAnalysisService {
         request.setMaxTokens(500);
         request.setRepeatPenalty(1.1);
 
-        LlmPolicyAnalysisResponse llmResponse;
+        LlmResponse llmResponse;
 
         try {
             llmResponse = webClient.post()
@@ -130,7 +134,7 @@ public class LlmAnalysisService {
                     .header("Content-Type", "application/json")
                     .bodyValue(request)
                     .retrieve()
-                    .bodyToMono(LlmPolicyAnalysisResponse.class)
+                    .bodyToMono(LlmResponse.class)
                     .block(Duration.ofMinutes(1));
             log.debug("LLM analysis successful");
         } catch (Exception e) {
@@ -162,7 +166,7 @@ public class LlmAnalysisService {
         log.info("Parsing LLM response string: {}", llmContentString);
 
         try {
-            LlmPolicyAnalysisResponse.PolicyInfoFromLlm parsedPolicyInfo = objectMapper.readValue(llmContentString, LlmPolicyAnalysisResponse.PolicyInfoFromLlm.class);
+            LlmResponse.PolicyInfoFromLlm parsedPolicyInfo = objectMapper.readValue(llmContentString, LlmResponse.PolicyInfoFromLlm.class);
 
             if (!parsedPolicyInfo.isPolicyChange()) {
                 log.info("LLM determined it's general news or unsuitable for PolicyInfo processing.");
@@ -183,7 +187,7 @@ public class LlmAnalysisService {
         }
     }
 
-    private PolicyInfo convertToPolicyInfo(LlmPolicyAnalysisResponse.PolicyInfoFromLlm parsedInfo, Map<String, String> stockNameToCodeMap) {
+    private PolicyInfo convertToPolicyInfo(LlmResponse.PolicyInfoFromLlm parsedInfo, Map<String, String> stockNameToCodeMap) {
         PolicyInfo policyInfo = new PolicyInfo();
         policyInfo.setPolicyName(parsedInfo.getPolicyName());
         policyInfo.setStage(parsedInfo.getStage());

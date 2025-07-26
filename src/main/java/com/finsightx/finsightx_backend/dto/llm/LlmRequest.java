@@ -11,7 +11,7 @@ import java.util.ArrayList;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LlmPolicyAnalysisRequest {
+public class LlmRequest {
 
     private ArrayList<Message> messages;
 
