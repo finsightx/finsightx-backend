@@ -34,4 +34,8 @@ public class StockService {
         return stockRepository.findByStockCodeIn(stockCodes);
     }
 
+    public List<Stock> getStocksByIndustryCodeIn(List<String> industryCodes) {
+        return stockRepository.findByIndustryCodeIn(industryCodes);
+    }
+
 }

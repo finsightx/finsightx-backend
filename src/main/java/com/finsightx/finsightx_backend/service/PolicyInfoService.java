@@ -34,6 +34,10 @@ public class PolicyInfoService {
         return policyInfoRepository.findByPolicyIdIn(policyIds);
     }
 
+    public List<PolicyInfo> getPolicyInfosByCreatedAtBetween(OffsetDateTime start, OffsetDateTime end) {
+        return policyInfoRepository.findByCreatedAtBetween(start, end);
+    }
+
     // TODO: Check
     @Transactional
     public PolicyInfo savePolicyInfo(PolicyInfo policyInfo) {

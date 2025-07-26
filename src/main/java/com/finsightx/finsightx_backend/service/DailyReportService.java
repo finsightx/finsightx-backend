@@ -8,22 +8,26 @@ import com.finsightx.finsightx_backend.dto.response.DailyReportListItemResponse;
 import com.finsightx.finsightx_backend.dto.response.DailyReportResponse;
 import com.finsightx.finsightx_backend.dto.response.PolicyInfoResponse;
 import com.finsightx.finsightx_backend.repository.DailyReportRepository;
-import com.finsightx.finsightx_backend.repository.StockRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DailyReportService {
 
     private final DailyReportRepository dailyReportRepository;
-    private final StockRepository stockRepository;
+
     private final PolicyInfoService policyInfoService;
     private final StockService stockService;
     private final UserService userService;
@@ -36,13 +40,34 @@ public class DailyReportService {
         return dailyReportRepository.findByOrderByCreatedAtDesc();
     }
 
-    // TODO: Check
     @Transactional
-    public DailyReport saveDailyReport(DailyReport report) {
-        if (report.getCreatedAt() == null) {
-            report.setCreatedAt(OffsetDateTime.now());
+    public void createDailyReport() {
+        log.info("Start creating today's daily report.");
+
+        OffsetDateTime todayStart = LocalDate.now(ZoneOffset.ofHours(9)).atStartOfDay().atOffset(ZoneOffset.ofHours(9));
+        OffsetDateTime todayEnd = todayStart.plusDays(1).minusNanos(1);
+
+        List<PolicyInfo> todayPolicies = policyInfoService.getPolicyInfosByCreatedAtBetween(todayStart, todayEnd);
+
+        if (todayPolicies.isEmpty()) {
+            log.info("No policy information generated today, so the daily report will not be created.");
+            return;
         }
-        return dailyReportRepository.save(report);
+
+        List<Long> policyIds = todayPolicies.stream()
+                .map(PolicyInfo::getPolicyId)
+                .collect(Collectors.toList());
+
+        String title = LocalDate.now(ZoneOffset.ofHours(9)).format(DateTimeFormatter.ofPattern("M월 d일 일일 정책 리포트"));
+
+        DailyReport report = new DailyReport();
+        report.setCreatedAt(OffsetDateTime.now(ZoneOffset.ofHours(9)));
+        report.setTitle(title);
+        report.setPolicies(policyIds);
+
+        dailyReportRepository.save(report);
+
+        log.info("Today's daily report has been successfully generated and saved. Title: '{}', Number of policies included: {}", title, policyIds.size());
     }
 
     public List<DailyReport> searchDailyReportsByKeyword(String keyword) {
@@ -74,7 +99,7 @@ public class DailyReportService {
                     .collect(Collectors.toSet());
 
 
-            userStockMap = stockRepository.findByStockCodeIn(new ArrayList<>(userPortfolioStockCodes)).stream()
+            userStockMap = stockService.getStocksByStockCodeIn(new ArrayList<>(userPortfolioStockCodes)).stream()
                     .collect(Collectors.toMap(Stock::getStockCode, stock -> stock));
 
             userPortfolioIndustryCodes = userStockMap.values().stream()
@@ -112,12 +137,12 @@ public class DailyReportService {
         }
 
         if (!distinctAllReportIndustryCodes.isEmpty()) {
-            stockRepository.findByIndustryCodeIn(new ArrayList<>(distinctAllReportIndustryCodes))
+            stockService.getStocksByIndustryCodeIn(new ArrayList<>(distinctAllReportIndustryCodes))
                     .forEach(stock -> allIndustryNamesMap.putIfAbsent(stock.getIndustryCode(), stock.getIndustryName()));
         }
 
         if (!distinctAllReportStockCodes.isEmpty()) {
-            stockRepository.findByStockCodeIn(new ArrayList<>(distinctAllReportStockCodes))
+            stockService.getStocksByStockCodeIn(new ArrayList<>(distinctAllReportStockCodes))
                     .forEach(stock -> allStockNamesMap.putIfAbsent(stock.getStockCode(), stock.getStockName()));
         }
 
@@ -308,7 +333,7 @@ public class DailyReportService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        Map<String, String> industryNamesMap = stockRepository.findByIndustryCodeIn(allIndustryCodes).stream()
+        Map<String, String> industryNamesMap = stockService.getStocksByIndustryCodeIn(allIndustryCodes).stream()
                 .collect(Collectors.toMap(Stock::getIndustryCode, Stock::getIndustryName, (existing, replacement) -> existing));
 
         return reports.stream()
