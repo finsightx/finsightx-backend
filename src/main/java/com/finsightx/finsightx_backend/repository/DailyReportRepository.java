@@ -13,21 +13,21 @@ public interface DailyReportRepository extends JpaRepository<DailyReport, Long> 
 
     List<DailyReport> findByOrderByCreatedAtDesc();
 
-    @Query(value = "SELECT DISTINCT dr FROM DailyReport dr " +
-            "LEFT JOIN PolicyInfo pi ON EXISTS (SELECT 1 FROM jsonb_array_elements_text(dr.policies) AS elem WHERE elem = pi.policy_id::text) " +
-            "LEFT JOIN Stock s ON " +
-            "  (jsonb_exists_any(pi.positiveStocks, s.stockCode) = true OR " +
-            "   jsonb_exists_any(pi.negativeStocks, s.stockCode) = true OR " +
-            "   jsonb_exists_any(pi.positiveIndustries, s.industryCode) = true OR " +
-            "   jsonb_exists_any(pi.negativeIndustries, s.industryCode) = true) " +
+    @Query(value = "SELECT DISTINCT dr.* FROM daily_report dr " +
+            "LEFT JOIN policy_info pi ON EXISTS (SELECT 1 FROM jsonb_array_elements_text(dr.policies) AS elem WHERE elem = pi.policy_id::text) " +
+            "LEFT JOIN stock s ON " +
+            "  (EXISTS (SELECT 1 FROM jsonb_array_elements_text(pi.positive_stocks) AS elem WHERE elem = s.stock_code) OR " +
+            "   EXISTS (SELECT 1 FROM jsonb_array_elements_text(pi.negative_stocks) AS elem WHERE elem = s.stock_code) OR " +
+            "   EXISTS (SELECT 1 FROM jsonb_array_elements_text(pi.positive_industries) AS elem WHERE elem = s.industry_code) OR " +
+            "   EXISTS (SELECT 1 FROM jsonb_array_elements_text(pi.negative_industries) AS elem WHERE elem = s.industry_code)) " +
             "WHERE LOWER(dr.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "      LOWER(pi.policyName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "      LOWER(pi.policy_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "      LOWER(pi.stage) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "      LOWER(pi.summary) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "      LOWER(pi.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "      LOWER(s.stockName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "      LOWER(s.industryName) LIKE LOWER(CONCAT('%', :keyword, '%'))",
-        nativeQuery = true)
+            "      LOWER(CAST(pi.content AS text)) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "      LOWER(s.stock_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "      LOWER(s.industry_name) LIKE LOWER(CONCAT('%', :keyword, '%'))",
+            nativeQuery = true)
     List<DailyReport> searchDailyReports(@Param("keyword") String keyword);
 
 
