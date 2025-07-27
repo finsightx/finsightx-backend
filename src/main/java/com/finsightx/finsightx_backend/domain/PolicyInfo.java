@@ -1,11 +1,12 @@
 package com.finsightx.finsightx_backend.domain;
 
-import com.finsightx.finsightx_backend.converter.JsonbStringListConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -35,23 +36,23 @@ public class PolicyInfo {
     @Column(name = "summary", nullable = false)
     private String summary;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content", columnDefinition = "jsonb", nullable = false)
-    @Convert(converter = JsonbStringListConverter.class)
     private List<String> content;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "positive_industries", columnDefinition = "jsonb", nullable = false)
-    @Convert(converter = JsonbStringListConverter.class)
     private List<String> positiveIndustries;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "negative_industries", columnDefinition = "jsonb", nullable = false)
-    @Convert(converter = JsonbStringListConverter.class)
     private List<String> negativeIndustries;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "positive_stocks", columnDefinition = "jsonb", nullable = false)
-    @Convert(converter = JsonbStringListConverter.class)
     private List<String> positiveStocks;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "negative_stocks", columnDefinition = "jsonb", nullable = false)
-    @Convert(converter = JsonbStringListConverter.class)
     private List<String> negativeStocks;
 }

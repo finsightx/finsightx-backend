@@ -1,11 +1,12 @@
 package com.finsightx.finsightx_backend.domain;
 
-import com.finsightx.finsightx_backend.converter.JsonbStringListConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -38,7 +39,7 @@ public class PolicySignal {
     @Column(name = "is_read", nullable = false)
     private Boolean isRead;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "stock_names", columnDefinition = "jsonb", nullable = false)
-    @Convert(converter = JsonbStringListConverter.class)
     private List<String> stockNames;
 }

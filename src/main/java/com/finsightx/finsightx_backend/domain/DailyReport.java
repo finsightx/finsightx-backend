@@ -1,11 +1,12 @@
 package com.finsightx.finsightx_backend.domain;
 
-import com.finsightx.finsightx_backend.converter.JsonbLongListConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -29,7 +30,7 @@ public class DailyReport {
     @Column(name = "title", nullable = false)
     private String title;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "policies", columnDefinition = "jsonb", nullable = false)
-    @Convert(converter = JsonbLongListConverter.class)
     private List<Long> policies;
 }
