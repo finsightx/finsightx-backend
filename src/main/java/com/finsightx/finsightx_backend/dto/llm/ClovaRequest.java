@@ -13,7 +13,7 @@ import java.util.ArrayList;
 @AllArgsConstructor
 public class ClovaRequest {
 
-    private ArrayList<ClovaMessage> clovaMessages;
+    private ArrayList<ClovaMessage> messages;
 
     private double temperature;
 

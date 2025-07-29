@@ -54,9 +54,9 @@ public class ChatbotService {
                 "- 답변의 논리적 흐름을 구성합니다. (예: \"탄소배출권 확대 정책이 철강 업계에 미치는 영향\" -> \"정책 발표 이후 시장 반응\" -> \"관련 수혜/피해 종목\")";
 
         ClovaRequest request = new ClovaRequest();
-        request.setClovaMessages(new ArrayList<>());
-        request.getClovaMessages().add(new ClovaMessage(ClovaMessage.ROLE.system, systemPrompt));
-        request.getClovaMessages().add(new ClovaMessage(ClovaMessage.ROLE.user, message));
+        request.setMessages(new ArrayList<>());
+        request.getMessages().add(new ClovaMessage(ClovaMessage.ROLE.system, systemPrompt));
+        request.getMessages().add(new ClovaMessage(ClovaMessage.ROLE.user, message));
         request.setTemperature(0.5);
         request.setMaxTokens(500);
         request.setRepeatPenalty(1.1);
@@ -78,12 +78,12 @@ public class ChatbotService {
             return null;
         }
 
-        if (clovaResponse == null || clovaResponse.getResult() == null || clovaResponse.getResult().getClovaMessage() == null) {
+        if (clovaResponse == null || clovaResponse.getResult() == null || clovaResponse.getResult().getMessage() == null) {
             log.error("LLM response is not valid.");
             return null;
         }
 
-        String llmContentString = clovaResponse.getResult().getClovaMessage().getContent();
+        String llmContentString = clovaResponse.getResult().getMessage().getContent();
         if (llmContentString == null || llmContentString.isEmpty()) {
             log.error("LLM response is empty.");
             return null;

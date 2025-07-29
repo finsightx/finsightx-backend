@@ -33,7 +33,7 @@ public class ClovaResponse {
     public static class Result {
         private Long created;
         private Usage usage;
-        private ClovaMessage clovaMessage;
+        private ClovaMessage message;
         private Long seed;
         private List<AiFilter> aiFilter;
     }
