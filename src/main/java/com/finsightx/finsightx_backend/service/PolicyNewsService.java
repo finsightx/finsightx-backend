@@ -162,6 +162,27 @@ public class PolicyNewsService {
         }
     }
 
+    private String parseOriginalUrl(String originalUrl) {
+        String cleanedUrl = originalUrl;
+
+        int startIndex = cleanedUrl.indexOf("[CDATA[");
+        int endIndex = cleanedUrl.indexOf("]]>");
+
+        if (startIndex != -1 && endIndex != -1) {
+            // "[CDATA[" 이후부터 "]]>" 이전까지 추출 (공백 포함)
+            cleanedUrl = cleanedUrl.substring(startIndex + "[CDATA[".length(), endIndex);
+            cleanedUrl = cleanedUrl.trim(); // 양 끝 공백 제거
+        }
+
+        // 2. '&call_from=' 이후 부분 제거
+        int paramIndex = cleanedUrl.indexOf("&call_from=");
+        if (paramIndex != -1) {
+            cleanedUrl = cleanedUrl.substring(0, paramIndex);
+        }
+
+        return cleanedUrl;
+    }
+
     @Transactional
     public void processPolicyNews() {
         log.info("Start processing policy news. Last processing time: {}", lastProcessedNewsTime);
@@ -208,7 +229,7 @@ public class PolicyNewsService {
             if (policyInfo != null) {
                 log.info("LLM determined as policy change news and PolicyInfo processing complete: {}", policyInfo.getPolicyName());
 
-                policyInfo.setOriginalUrl(newsItem.getOriginalUrl());
+                policyInfo.setOriginalUrl(parseOriginalUrl(newsItem.getOriginalUrl()));
                 try {
                     policyInfo = policyInfoService.savePolicyInfo(policyInfo);
                     log.info("PolicyInfo saved: ID {}", policyInfo.getPolicyId());
@@ -428,7 +449,7 @@ public class PolicyNewsService {
                 log.info("LLM determined as policy change news and PolicyInfo processing complete: {}", policyInfo.getPolicyName());
 
                 policyInfo.setCreatedAt(newsItem.getApproveDate());
-                policyInfo.setOriginalUrl(newsItem.getOriginalUrl());
+                policyInfo.setOriginalUrl(parseOriginalUrl(newsItem.getOriginalUrl()));
                 try {
                     policyInfo = policyInfoService.savePolicyInfo(policyInfo);
                     log.info("PolicyInfo saved: ID {}", policyInfo.getPolicyId());
