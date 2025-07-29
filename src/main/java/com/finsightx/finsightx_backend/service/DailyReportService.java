@@ -41,10 +41,10 @@ public class DailyReportService {
     }
 
     @Transactional
-    public void createDailyReport() {
-        log.info("Start creating today's daily report.");
+    public void createDailyReport(LocalDate date) {
+        log.info("Start creating daily report for {}.", date);
 
-        OffsetDateTime todayStart = LocalDate.now(ZoneOffset.ofHours(9)).atStartOfDay().atOffset(ZoneOffset.ofHours(9));
+        OffsetDateTime todayStart = date.atStartOfDay().atOffset(ZoneOffset.ofHours(9));
         OffsetDateTime todayEnd = todayStart.plusDays(1).minusNanos(1);
 
         List<PolicyInfo> todayPolicies = policyInfoService.getPolicyInfosByCreatedAtBetween(todayStart, todayEnd);

@@ -20,10 +20,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
 import java.net.URI;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -52,6 +49,7 @@ public class PolicyNewsService {
     private final PolicySignalService policySignalService;
     private final UserService userService;
     private final StockService stockService;
+    private final DailyReportService dailyReportService;
 
     private OffsetDateTime lastProcessedNewsTime = OffsetDateTime.now(ZoneId.of("Asia/Seoul")).minusMinutes(30);
 
@@ -468,6 +466,12 @@ public class PolicyNewsService {
                 Thread.currentThread().interrupt();
                 log.error("Thread interrupted while sleeping", e);
             }
+        }
+
+        try {
+            dailyReportService.createDailyReport(date);
+        } catch (Exception e) {
+            log.error("Failed to create daily report for {}.", date, e);
         }
 
         log.info("Policy news processing for {} complete.", date);
