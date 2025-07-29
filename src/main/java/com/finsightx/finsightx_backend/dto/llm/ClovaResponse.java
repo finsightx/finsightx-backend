@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LlmResponse {
+public class ClovaResponse {
 
     private Status status;
 
@@ -33,7 +33,7 @@ public class LlmResponse {
     public static class Result {
         private Long created;
         private Usage usage;
-        private Message message;
+        private ClovaMessage clovaMessage;
         private Long seed;
         private List<AiFilter> aiFilter;
     }

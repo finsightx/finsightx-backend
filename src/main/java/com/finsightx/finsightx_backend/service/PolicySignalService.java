@@ -59,18 +59,14 @@ public class PolicySignalService {
         if (signals.isEmpty()) return Collections.emptyList();
 
         return signals.stream()
-                .map(signal -> {
-                    // toPolicySignalListItemResponse는 PolicyInfo 상세를 포함하지 않으므로 Map을 직접 사용하지 않아도 됨.
-                    // stockNames는 이미 엔티티에 저장되어 있다고 가정.
-                    return new PolicySignalListItemResponse(
-                            signal.getPolicySignalId(),
-                            signal.getMessage(),
-                            signal.getPolicyId(),
-                            signal.getCreatedAt(),
-                            signal.getIsRead(),
-                            signal.getStockNames()
-                    );
-                })
+                .map(signal -> new PolicySignalListItemResponse(
+                        signal.getPolicySignalId(),
+                        signal.getMessage(),
+                        signal.getPolicyId(),
+                        signal.getCreatedAt(),
+                        signal.getIsRead(),
+                        signal.getStockNames()
+                ))
                 .collect(Collectors.toList());
     }
 
@@ -102,28 +98,6 @@ public class PolicySignalService {
                 updatedSignal.getCreatedAt(),
                 updatedSignal.getIsRead(),
                 updatedSignal.getStockNames()
-        );
-    }
-
-    public PolicySignalListItemResponse toPolicySignalListItemResponse(PolicySignal signal) {
-        return new PolicySignalListItemResponse(
-                signal.getPolicySignalId(),
-                signal.getMessage(),
-                signal.getPolicyId(),
-                signal.getCreatedAt(),
-                signal.getIsRead(),
-                signal.getStockNames()
-        );
-    }
-
-    public PolicySignalResponse toPolicySignalResponse(PolicySignal signal) {
-        return new PolicySignalResponse(
-                signal.getPolicySignalId(),
-                signal.getMessage(),
-                policyInfoService.getPolicyInfoById(signal.getPolicyId())
-                        .map(policyInfoService::toPolicyInfoResponse)
-                        .orElse(null),
-                signal.getStockNames()
         );
     }
 

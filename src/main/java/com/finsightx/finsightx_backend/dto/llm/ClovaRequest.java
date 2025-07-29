@@ -5,17 +5,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Message {
+public class ClovaRequest {
 
-    private ROLE role;
+    private ArrayList<ClovaMessage> clovaMessages;
 
-    private String content;
+    private double temperature;
 
-    public enum ROLE {
-        system, user, assistant
-    }
+    private int maxTokens;
+
+    private double repeatPenalty;
+
 }

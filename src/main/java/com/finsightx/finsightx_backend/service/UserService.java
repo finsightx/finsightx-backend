@@ -33,31 +33,6 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User ID " + userId + "를 찾을 수 없습니다."));
     }
 
-    public List<PortfolioItem> findPortfolioStocksByIndustryCode(Long userId, String industryCode) {
-        User user = getUserById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User ID " + userId + "를 찾을 수 없습니다."));
-
-        List<PortfolioItem> userPortfolio = user.getPortfolio();
-        if (userPortfolio == null || userPortfolio.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<String> portfolioStockCodes = userPortfolio.stream()
-                .map(PortfolioItem::getStockCode)
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<String, Stock> stockMap = stockRepository.findByStockCodeIn(portfolioStockCodes).stream()
-                .collect(Collectors.toMap(Stock::getStockCode, stock -> stock));
-
-        return userPortfolio.stream()
-                .filter(item -> {
-                    Stock stock = stockMap.get(item.getStockCode());
-                    return stock != null && stock.getIndustryCode().equals(industryCode);
-                })
-                .collect(Collectors.toList());
-    }
-
     public List<PortfolioItemResponse> getMyAssetsAsDto(Long userId) {
         List<PortfolioItem> rawPortfolio = getUserPortfolio(userId);
         if (rawPortfolio.isEmpty()) {

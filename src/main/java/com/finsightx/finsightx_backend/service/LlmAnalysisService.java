@@ -3,17 +3,14 @@ package com.finsightx.finsightx_backend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finsightx.finsightx_backend.domain.PolicyInfo;
-import com.finsightx.finsightx_backend.dto.llm.LlmResponse;
 import com.finsightx.finsightx_backend.dto.llm.PolicyInfoFromLlm;
 import com.finsightx.finsightx_backend.dto.policyNewsApi.PolicyNewsItem;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.genai.types.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import com.google.genai.Client;
 
 import java.time.OffsetDateTime;
@@ -24,17 +21,13 @@ import java.util.*;
 @Slf4j
 public class LlmAnalysisService {
 
-    private final WebClient webClient;
-
     private final ObjectMapper objectMapper;
 
     private final Client client;
 
     public LlmAnalysisService(
-            @Qualifier("llmAnalysisWebClient") WebClient webClient,
             ObjectMapper objectMapper,
             @Value("${api.gemini.key}") String geminiApiKey) {
-        this.webClient = webClient;
         this.objectMapper = objectMapper;
         client = Client.builder().apiKey(geminiApiKey).build();
     }
@@ -49,12 +42,6 @@ public class LlmAnalysisService {
             "4040", "4050", "4510", "4520", "4530", "4535", "4540", "5010", "5020",
             "5510"
     );
-
-    @Value("${api.clova.analysis.endpoint}")
-    private String clovaApiEndpoint;
-
-    @Value("${api.clova.key}")
-    private String clovaApiKey;
 
     @Value("${api.gemini.model}")
     private String geminiApiModel;

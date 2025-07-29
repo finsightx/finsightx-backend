@@ -212,104 +212,14 @@ public class DailyReportService {
     }
 
     public Optional<DailyReportResponse> getDailyReportAsDto(Long reportId) {
-        return dailyReportRepository.findById(reportId)
-                .map(report -> {
-                    List<Long> policyIds = report.getPolicies() != null ? report.getPolicies() : new ArrayList<>();
-                    Map<Long, PolicyInfo> policyInfoMap = new HashMap<>();
-
-                    if (!policyIds.isEmpty()) {
-                        List<PolicyInfo> fetchedPolicyInfos = policyInfoService.getPolicyInfoByIds(policyIds);
-                        policyInfoMap = fetchedPolicyInfos.stream()
-                                .collect(Collectors.toMap(PolicyInfo::getPolicyId, policy -> policy));
-                    }
-
-                    List<PolicyInfoResponse> policyInfoResponses = policyIds.stream()
-                            .map(policyInfoMap::get)
-                            .filter(java.util.Objects::nonNull)
-                            .map(policyInfoService::toPolicyInfoResponse)
-                            .collect(Collectors.toList());
-
-                    return new DailyReportResponse(
-                            report.getReportId(),
-                            report.getTitle(),
-                            report.getCreatedAt(),
-                            policyInfoResponses
-                    );
-                });
+        return getDailyReportById(reportId)
+                .map(this::toDailyReportResponse);
     }
 
     public List<DailyReportListItemResponse> searchDailyReportsAsDto(String keyword) {
         List<DailyReport> reports = searchDailyReportsByKeyword(keyword);
 
         return mapReportsToDailyReportListItemResponses(reports);
-    }
-
-
-    public DailyReportListItemResponse toDailyReportListItemResponse(DailyReport report) {
-        Set<String> industryNames = new HashSet<>();
-        for (Long policyId : report.getPolicies()) {
-            policyInfoService.getPolicyInfoById(policyId).ifPresent(policyInfo -> {
-                List<String> allIndustryCodes = new ArrayList<>();
-                if (policyInfo.getPositiveIndustries() != null) allIndustryCodes.addAll(policyInfo.getPositiveIndustries());
-                if (policyInfo.getNegativeIndustries() != null) allIndustryCodes.addAll(policyInfo.getNegativeIndustries());
-
-                for (String industryCode : allIndustryCodes) {
-                    stockService.getIndustryNameByCode(industryCode)
-                            .ifPresent(industryNames::add);
-                }
-            });
-        }
-
-        return new DailyReportListItemResponse(
-                report.getReportId(),
-                report.getTitle(),
-                report.getCreatedAt(),
-                new ArrayList<>(industryNames),
-                new ArrayList<>()
-        );
-    }
-
-    public DailyReportListItemResponse toDailyReportPersonalizedListItemResponse(DailyReport report, Long userId) {
-        Set<String> industryNames = new HashSet<>();
-        Set<String> stockNames = new HashSet<>();
-
-        try {
-            List<String> userPortfolioStockCodes = userService.getUserPortfolio(userId).stream()
-                    .map(PortfolioItem::getStockCode)
-                    .toList();
-
-            for (Long policyId : report.getPolicies()) {
-                policyInfoService.getPolicyInfoById(policyId).ifPresent(policyInfo -> {
-                    List<String> allIndustryCodes = new ArrayList<>();
-                    if (policyInfo.getPositiveIndustries() != null) allIndustryCodes.addAll(policyInfo.getPositiveIndustries());
-                    if (policyInfo.getNegativeIndustries() != null) allIndustryCodes.addAll(policyInfo.getNegativeIndustries());
-                    for (String industryCode : allIndustryCodes) {
-                        stockService.getIndustryNameByCode(industryCode)
-                                .ifPresent(industryNames::add);
-                    }
-
-                    List<String> allStockCodes = new ArrayList<>();
-                    if (policyInfo.getPositiveStocks() != null) allStockCodes.addAll(policyInfo.getPositiveStocks());
-                    if (policyInfo.getNegativeStocks() != null) allStockCodes.addAll(policyInfo.getNegativeStocks());
-
-                    for (String stockCode : allStockCodes) {
-                        if (userPortfolioStockCodes.contains(stockCode)) {
-                            stockService.getStockByStockCode(stockCode).ifPresent(stock -> stockNames.add(stock.getStockName()));
-                        }
-                    }
-                });
-            }
-        } catch (IllegalArgumentException e) {
-            // Empty List
-        }
-
-        return new DailyReportListItemResponse(
-                report.getReportId(),
-                report.getTitle(),
-                report.getCreatedAt(),
-                new ArrayList<>(industryNames),
-                new ArrayList<>(stockNames)
-        );
     }
 
     private List<DailyReportListItemResponse> mapReportsToDailyReportListItemResponses(List<DailyReport> reports) {

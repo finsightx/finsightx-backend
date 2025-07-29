@@ -1,8 +1,8 @@
 package com.finsightx.finsightx_backend.service;
 
-import com.finsightx.finsightx_backend.dto.llm.LlmRequest;
-import com.finsightx.finsightx_backend.dto.llm.LlmResponse;
-import com.finsightx.finsightx_backend.dto.llm.Message;
+import com.finsightx.finsightx_backend.dto.llm.ClovaRequest;
+import com.finsightx.finsightx_backend.dto.llm.ClovaResponse;
+import com.finsightx.finsightx_backend.dto.llm.ClovaMessage;
 import com.finsightx.finsightx_backend.dto.response.ChatbotResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,10 +26,10 @@ public class ChatbotService {
     }
 
     @Value("${api.clova.chatbot.endpoint}")
-    private String llmApiEndpoint;
+    private String clovaApiEndpoint;
 
     @Value("${api.clova.key}")
-    private String llmApiKey;
+    private String clovaApiKey;
 
     public ChatbotResponse sendMessage(String message) {
         String systemPrompt = "- 당신은 대한민국 주식 시장에 상장된 기업들의 주가에 정책 변화가 미치는 영향을 전문적으로 분석하고 답변하는 AI 챗봇입니다.\n" +
@@ -53,24 +53,24 @@ public class ChatbotService {
                 "- 각 질문에 대해 명확한 소제목 또는 구분자를 사용하여 답변을 구조화합니다.\n\n" +
                 "- 답변의 논리적 흐름을 구성합니다. (예: \"탄소배출권 확대 정책이 철강 업계에 미치는 영향\" -> \"정책 발표 이후 시장 반응\" -> \"관련 수혜/피해 종목\")";
 
-        LlmRequest request = new LlmRequest();
-        request.setMessages(new ArrayList<>());
-        request.getMessages().add(new Message(Message.ROLE.system, systemPrompt));
-        request.getMessages().add(new Message(Message.ROLE.user, message));
+        ClovaRequest request = new ClovaRequest();
+        request.setClovaMessages(new ArrayList<>());
+        request.getClovaMessages().add(new ClovaMessage(ClovaMessage.ROLE.system, systemPrompt));
+        request.getClovaMessages().add(new ClovaMessage(ClovaMessage.ROLE.user, message));
         request.setTemperature(0.5);
         request.setMaxTokens(500);
         request.setRepeatPenalty(1.1);
 
-        LlmResponse llmResponse;
+        ClovaResponse clovaResponse;
 
         try {
-            llmResponse = webClient.post()
-                    .uri(llmApiEndpoint)
-                    .header("Authorization", "Bearer " + llmApiKey)
+            clovaResponse = webClient.post()
+                    .uri(clovaApiEndpoint)
+                    .header("Authorization", "Bearer " + clovaApiKey)
                     .header("Content-Type", "application/json")
                     .bodyValue(request)
                     .retrieve()
-                    .bodyToMono(LlmResponse.class)
+                    .bodyToMono(ClovaResponse.class)
                     .block(Duration.ofMinutes(1));
             log.debug("LLM response successful");
         } catch (Exception e) {
@@ -78,12 +78,12 @@ public class ChatbotService {
             return null;
         }
 
-        if (llmResponse == null || llmResponse.getResult() == null || llmResponse.getResult().getMessage() == null) {
+        if (clovaResponse == null || clovaResponse.getResult() == null || clovaResponse.getResult().getClovaMessage() == null) {
             log.error("LLM response is not valid.");
             return null;
         }
 
-        String llmContentString = llmResponse.getResult().getMessage().getContent();
+        String llmContentString = clovaResponse.getResult().getClovaMessage().getContent();
         if (llmContentString == null || llmContentString.isEmpty()) {
             log.error("LLM response is empty.");
             return null;
