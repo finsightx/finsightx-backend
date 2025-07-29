@@ -20,7 +20,6 @@ public class PolicyNewsScheduler {
     private final PolicyNewsService policyNewsService;
 
     @Scheduled(cron = "0 */30 7-21 * * MON-FRI", zone = "Asia/Seoul")
-//    @Scheduled(cron = "0 */1 * * * *", zone = "Asia/Seoul")
     public void schedulePolicyNewsCollection() {
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
         LocalTime currentTime = now.toLocalTime();

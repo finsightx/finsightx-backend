@@ -53,9 +53,7 @@ public class PolicyNewsService {
     private final UserService userService;
     private final StockService stockService;
 
-//    TODO: Test
-//    private OffsetDateTime lastProcessedNewsTime = OffsetDateTime.now(ZoneId.of("Asia/Seoul")).minusMinutes(30);
-    private OffsetDateTime lastProcessedNewsTime = OffsetDateTime.now(ZoneId.of("Asia/Seoul")).minusDays(1);
+    private OffsetDateTime lastProcessedNewsTime = OffsetDateTime.now(ZoneId.of("Asia/Seoul")).minusMinutes(30);
 
     private PolicyNewsApiResponse fetchPolicyNewsFromApi(LocalDate startDate, LocalDate endDate) {
         String formattedStartDate = startDate.format(apiDateFormat);

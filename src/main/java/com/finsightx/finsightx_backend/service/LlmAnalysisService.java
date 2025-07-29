@@ -156,8 +156,6 @@ public class LlmAnalysisService {
 
         try {
             PolicyInfoFromLlm parsedPolicyInfo = objectMapper.readValue(llmContentString, PolicyInfoFromLlm.class);
-            System.out.println("isPolicyChange: " + parsedPolicyInfo.isPolicyChange() +
-                    "\npolicyName: " + parsedPolicyInfo.getPolicyName());
 
             if (!parsedPolicyInfo.isPolicyChange()) {
                 log.info("LLM determined it's general news or unsuitable for PolicyInfo processing.");
@@ -200,14 +198,6 @@ public class LlmAnalysisService {
 
         policyInfo.setPositiveStocks(positiveStockCodes);
         policyInfo.setNegativeStocks(negativeStockCodes);
-
-        System.out.println("테스트 결과: " + policyInfo.getPolicyName() +
-                "\n단계: " + policyInfo.getStage() +
-                "\n내용: " + policyInfo.getContent() +
-                "\n긍정 업종: " + policyInfo.getPositiveIndustries() +
-                "\n긍정 종목: " + policyInfo.getPositiveStocks() +
-                "\n부정 업종: " + policyInfo.getNegativeIndustries() +
-                "\n부정 종목: " + policyInfo.getNegativeStocks());
 
         return policyInfo;
     }
