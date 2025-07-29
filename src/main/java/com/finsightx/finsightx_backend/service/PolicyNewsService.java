@@ -208,6 +208,7 @@ public class PolicyNewsService {
             if (policyInfo != null) {
                 log.info("LLM determined as policy change news and PolicyInfo processing complete: {}", policyInfo.getPolicyName());
 
+                policyInfo.setOriginalUrl(newsItem.getOriginalUrl());
                 try {
                     policyInfo = policyInfoService.savePolicyInfo(policyInfo);
                     log.info("PolicyInfo saved: ID {}", policyInfo.getPolicyId());
@@ -427,6 +428,7 @@ public class PolicyNewsService {
                 log.info("LLM determined as policy change news and PolicyInfo processing complete: {}", policyInfo.getPolicyName());
 
                 policyInfo.setCreatedAt(newsItem.getApproveDate());
+                policyInfo.setOriginalUrl(newsItem.getOriginalUrl());
                 try {
                     policyInfo = policyInfoService.savePolicyInfo(policyInfo);
                     log.info("PolicyInfo saved: ID {}", policyInfo.getPolicyId());

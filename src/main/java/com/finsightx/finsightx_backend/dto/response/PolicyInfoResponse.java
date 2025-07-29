@@ -34,4 +34,6 @@ public class PolicyInfoResponse {
 
     private List<StockResponse> negativeStocks;
 
+    private String originalUrl;
+
 }

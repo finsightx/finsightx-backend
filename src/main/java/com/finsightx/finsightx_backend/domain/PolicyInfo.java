@@ -55,4 +55,8 @@ public class PolicyInfo {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "negative_stocks", columnDefinition = "jsonb", nullable = false)
     private List<String> negativeStocks;
+
+    @Column(name = "original_url", nullable = false)
+    private String originalUrl;
+
 }

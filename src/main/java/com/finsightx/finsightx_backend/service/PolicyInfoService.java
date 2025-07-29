@@ -112,7 +112,8 @@ public class PolicyInfoService {
                 positiveIndustries,
                 negativeIndustries,
                 positiveStocks,
-                negativeStocks
+                negativeStocks,
+                policyInfo.getOriginalUrl()
         );
     }
 
