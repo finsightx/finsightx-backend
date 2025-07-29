@@ -11,7 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
 
     @Bean(name = "llmAnalysisWebClient")
-    public WebClient llmAnalysisWebClient(@Value("${api.llm.analysis.endpoint}") String apiUrl) {
+    public WebClient llmAnalysisWebClient(@Value("${api.clova.analysis.endpoint}") String apiUrl) {
         return WebClient.builder()
                 .baseUrl(apiUrl)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -19,7 +19,7 @@ public class WebClientConfig {
     }
 
     @Bean(name = "llmChatbotWebClient")
-    public WebClient llmChatbotWebClient(@Value("${api.llm.chatbot.endpoint}") String apiUrl) {
+    public WebClient llmChatbotWebClient(@Value("${api.clova.chatbot.endpoint}") String apiUrl) {
         return WebClient.builder()
                 .baseUrl(apiUrl)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

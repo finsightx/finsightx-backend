@@ -3,6 +3,8 @@ package com.finsightx.finsightx_backend.service;
 import com.finsightx.finsightx_backend.domain.*;
 import com.finsightx.finsightx_backend.dto.policyNewsApi.PolicyNewsApiResponse;
 import com.finsightx.finsightx_backend.dto.policyNewsApi.PolicyNewsItem;
+import com.finsightx.finsightx_backend.dto.request.NewsItemRequest;
+import com.finsightx.finsightx_backend.dto.response.PolicyInfoResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +25,9 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,7 +52,6 @@ public class PolicyNewsService {
     private final PolicySignalService policySignalService;
     private final UserService userService;
     private final StockService stockService;
-    private final PushNotificationService pushNotificationService;
 
 //    TODO: Test
 //    private OffsetDateTime lastProcessedNewsTime = OffsetDateTime.now(ZoneId.of("Asia/Seoul")).minusMinutes(30);
@@ -111,7 +114,6 @@ public class PolicyNewsService {
                 item.setNewsItemId(getTagValue("NewsItemId", newsItemElement));
                 item.setContentsStatus(getTagValue("ContentsStatus", newsItemElement));
                 item.setModifyId(getTagValue("ModifyId", newsItemElement));
-                item.setModifyDate(parseDateString(getTagValue("ModifyDate", newsItemElement)));
                 item.setApproveDate(parseDateString(getTagValue("ApproveDate", newsItemElement)));
                 item.setApproverName(getTagValue("ApproverName", newsItemElement));
                 item.setEmbargoDate(getTagValue("EmbargoDate", newsItemElement));
@@ -149,16 +151,16 @@ public class PolicyNewsService {
         return null;
     }
 
-    private Optional<OffsetDateTime> parseDateString(String dateString) {
+    private OffsetDateTime parseDateString(String dateString) {
         if (dateString == null || dateString.isEmpty()) {
-            return Optional.empty();
+            return null;
         }
         try {
             LocalDateTime localDateTime = LocalDateTime.parse(dateString, apiDateTimeFormatter);
-            return Optional.of(localDateTime.atZone(ZoneId.of("Asia/Seoul")).toOffsetDateTime());
+            return localDateTime.atZone(ZoneId.of("Asia/Seoul")).toOffsetDateTime();
         } catch (Exception e) {
             log.warn("Date string parsing error: '{}'", dateString, e);
-            return Optional.empty();
+            return null;
         }
     }
 
@@ -185,8 +187,8 @@ public class PolicyNewsService {
         log.info("Collected {} NewsItems from API.", apiResponse.getNewsItems().size());
 
         List<PolicyNewsItem> newNewsItems = apiResponse.getNewsItems().stream()
-                .filter(newsItem -> newsItem.getApproveDate().isPresent()
-                        && newsItem.getApproveDate().get().isAfter(lastProcessedNewsTime)
+                .filter(newsItem -> newsItem.getApproveDate() != null
+                        && newsItem.getApproveDate().isAfter(lastProcessedNewsTime)
                         && newsItem.getGroupingCode().contains("policy"))
                 .toList();
 
@@ -208,16 +210,17 @@ public class PolicyNewsService {
             if (policyInfo != null) {
                 log.info("LLM determined as policy change news and PolicyInfo processing complete: {}", policyInfo.getPolicyName());
 
-                policyInfo = policyInfoService.savePolicyInfo(policyInfo);
-
-                log.info("PolicyInfo saved: ID {}", policyInfo.getPolicyId());
+                try {
+                    policyInfo = policyInfoService.savePolicyInfo(policyInfo);
+                    log.info("PolicyInfo saved: ID {}", policyInfo.getPolicyId());
+                } catch (Exception e) {
+                    log.error("Failed to save PolicyInfo: {}", e.getMessage());
+                }
 
                 processPolicySignalsForUsers(policyInfo);
             } else {
                 log.info("LLM determined it's general news or unsuitable for PolicyInfo processing. News Title: {}", newsItem.getTitle());
             }
-            // TODO: Test
-            break;
         }
 
         lastProcessedNewsTime = now;
@@ -300,7 +303,6 @@ public class PolicyNewsService {
                 String notificationTitle = "새로운 정책 시그널";
                 String notificationBody = createNotificationBody(userImpactStockCodes, stockCodeToNameMap);
 
-                pushNotificationService.sendPushNotification(user.getUserId(), notificationTitle, notificationBody);
                 log.info("Push notification sent to user {}.", user.getUserId());
             } else {
                  log.debug("No policy-related stocks in user {}'s holdings. Not generating a signal.", user.getUserId());
@@ -350,6 +352,104 @@ public class PolicyNewsService {
         messageBuilder.append(String.format(" 줄 수 있는 정책이 %s 단계에 있습니다.", stage));
 
         return messageBuilder.toString();
+    }
+
+    @Transactional
+    public PolicyInfoResponse analysisPolicyNewsItem(NewsItemRequest news) {
+        PolicyNewsItem newsItem = new PolicyNewsItem();
+        newsItem.setTitle(news.getTitle());
+        newsItem.setSubTitle1(news.getSubTitle1());
+        newsItem.setDataContents(news.getDataContents());
+
+        List<Stock> allStocks = stockService.findAll();
+        Map<String, String> stockNameToCodeMap = allStocks.stream()
+                .collect(Collectors.toMap(Stock::getStockName, Stock::getStockCode, (existing, replacement) -> existing));
+
+        PolicyInfo policyInfo = llmAnalysisService.analyzePolicyNewsWithLlm(newsItem, stockNameToCodeMap);
+
+        if (policyInfo != null) {
+            log.info("LLM determined as policy change news and PolicyInfo processing complete: {}", policyInfo.getPolicyName());
+
+            return policyInfoService.toPolicyInfoResponse(policyInfo);
+
+        } else {
+            log.info("LLM determined it's general news or unsuitable for PolicyInfo processing. News Title: {}", newsItem.getTitle());
+            return null;
+        }
+
+    }
+
+    @Transactional
+    public void processPolicyNewsByDate(String dateString) {
+        LocalDate date;
+        try {
+            date = LocalDate.parse(dateString, apiDateFormat);
+            System.out.println("Converted LocalDate: " + date);
+
+        } catch (DateTimeParseException e) {
+            System.err.println("Date Format error: " + e.getMessage());
+            return;
+        }
+
+        LocalDate startDate = date;
+        LocalDate endDate = date;
+
+        PolicyNewsApiResponse apiResponse = fetchPolicyNewsFromApi(startDate, endDate);
+
+        if (!"0".equals(apiResponse.getResultCode())) {
+            log.error("Policy news API call or XML parsing error: {} - {}", apiResponse.getResultCode(), apiResponse.getResultMsg());
+            return;
+        }
+        if (apiResponse.getNewsItems() == null || apiResponse.getNewsItems().isEmpty()) {
+            log.info("Missing NewsItem in API");
+            return;
+        }
+
+        log.info("Collected {} NewsItems from API.", apiResponse.getNewsItems().size());
+
+        List<PolicyNewsItem> newNewsItems = apiResponse.getNewsItems().stream()
+                .filter(newsItem -> newsItem.getGroupingCode().contains("policy"))
+                .toList();
+
+        if (newNewsItems.isEmpty()) {
+            log.info("No new approved policy news or news has already been processed.");
+            return;
+        }
+
+        log.info("Start processing {} newly approved news items.", newNewsItems.size());
+
+        List<Stock> allStocks = stockService.findAll();
+        Map<String, String> stockNameToCodeMap = allStocks.stream()
+                .collect(Collectors.toMap(Stock::getStockName, Stock::getStockCode, (existing, replacement) -> existing));
+
+        for (PolicyNewsItem newsItem : newNewsItems) {
+            PolicyInfo policyInfo = llmAnalysisService.analyzePolicyNewsWithLlm(newsItem, stockNameToCodeMap);
+
+            if (policyInfo != null) {
+                log.info("LLM determined as policy change news and PolicyInfo processing complete: {}", policyInfo.getPolicyName());
+
+                policyInfo.setCreatedAt(newsItem.getApproveDate());
+                try {
+                    policyInfo = policyInfoService.savePolicyInfo(policyInfo);
+                    log.info("PolicyInfo saved: ID {}", policyInfo.getPolicyId());
+                } catch (Exception e) {
+                    log.error("Failed to save PolicyInfo: {}", e.getMessage());
+                }
+
+                processPolicySignalsForUsers(policyInfo);
+            } else {
+                log.info("LLM determined it's general news or unsuitable for PolicyInfo processing. News Title: {}", newsItem.getTitle());
+            }
+
+            try {
+                TimeUnit.SECONDS.sleep(6);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Thread interrupted while sleeping", e);
+            }
+        }
+
+        log.info("Policy news processing for {} complete.", date);
     }
 
     private String createNotificationBody(List<String> userImpactStockCodes, Map<String, String> stockCodeToNameMap) {

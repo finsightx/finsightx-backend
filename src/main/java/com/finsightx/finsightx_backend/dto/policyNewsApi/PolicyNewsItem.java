@@ -20,9 +20,7 @@ public class PolicyNewsItem {
 
     private String modifyId;
 
-    private Optional<OffsetDateTime> modifyDate;
-
-    private Optional<OffsetDateTime> approveDate;
+    private OffsetDateTime approveDate;
 
     private String approverName;
 

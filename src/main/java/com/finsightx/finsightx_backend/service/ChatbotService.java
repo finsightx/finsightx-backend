@@ -25,10 +25,10 @@ public class ChatbotService {
         this.webClient = webClient;
     }
 
-    @Value("${api.llm.chatbot.endpoint}")
+    @Value("${api.clova.chatbot.endpoint}")
     private String llmApiEndpoint;
 
-    @Value("${api.llm.key}")
+    @Value("${api.clova.key}")
     private String llmApiKey;
 
     public ChatbotResponse sendMessage(String message) {
