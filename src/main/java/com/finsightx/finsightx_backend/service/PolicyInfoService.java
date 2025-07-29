@@ -106,7 +106,7 @@ public class PolicyInfoService {
                 policyInfo.getPolicyId(),
                 policyInfo.getPolicyName(),
                 policyInfo.getStage(),
-                policyInfo.getCreatedAt(),
+                policyInfo.getCreatedAt().atZoneSameInstant(ZoneId.of("Asia/Seoul")).toOffsetDateTime(),
                 policyInfo.getSummary(),
                 policyInfo.getContent(),
                 positiveIndustries,

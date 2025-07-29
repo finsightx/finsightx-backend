@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -203,7 +204,7 @@ public class DailyReportService {
                     return new DailyReportListItemResponse(
                             report.getReportId(),
                             report.getTitle(),
-                            report.getCreatedAt(),
+                            report.getCreatedAt().atZoneSameInstant(ZoneId.of("Asia/Seoul")).toOffsetDateTime(),
                             new ArrayList<>(relatedIndustryNames),
                             new ArrayList<>(userStockNames)
                     );
@@ -267,7 +268,7 @@ public class DailyReportService {
                     return new DailyReportListItemResponse(
                             report.getReportId(),
                             report.getTitle(),
-                            report.getCreatedAt(),
+                            report.getCreatedAt().atZoneSameInstant(ZoneId.of("Asia/Seoul")).toOffsetDateTime(),
                             new ArrayList<>(relatedIndustries),
                             new ArrayList<>()
                     );
@@ -294,7 +295,7 @@ public class DailyReportService {
         return new DailyReportResponse(
                 report.getReportId(),
                 report.getTitle(),
-                report.getCreatedAt(),
+                report.getCreatedAt().atZoneSameInstant(ZoneId.of("Asia/Seoul")).toOffsetDateTime(),
                 policyInfoResponses
         );
     }

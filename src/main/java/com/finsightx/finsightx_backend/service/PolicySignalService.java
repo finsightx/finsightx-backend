@@ -63,7 +63,7 @@ public class PolicySignalService {
                         signal.getPolicySignalId(),
                         signal.getMessage(),
                         signal.getPolicyId(),
-                        signal.getCreatedAt(),
+                        signal.getCreatedAt().atZoneSameInstant(ZoneId.of("Asia/Seoul")).toOffsetDateTime(),
                         signal.getIsRead(),
                         signal.getStockNames()
                 ))
@@ -95,7 +95,7 @@ public class PolicySignalService {
                 updatedSignal.getPolicySignalId(),
                 updatedSignal.getMessage(),
                 updatedSignal.getPolicyId(),
-                updatedSignal.getCreatedAt(),
+                updatedSignal.getCreatedAt().atZoneSameInstant(ZoneId.of("Asia/Seoul")).toOffsetDateTime(),
                 updatedSignal.getIsRead(),
                 updatedSignal.getStockNames()
         );
