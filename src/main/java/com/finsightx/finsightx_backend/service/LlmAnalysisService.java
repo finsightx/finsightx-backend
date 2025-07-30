@@ -86,8 +86,8 @@ public class LlmAnalysisService {
                 "5. `content`:\n" +
                 "    - 정책 변화가 **어떤 업종 및 종목에 긍정적/부정적 영향을 줄 수 있는지**를 분석합니다.\n" +
                 "    - **구체적인 근거**를 포함합니다. (예: 과거의 비슷한 사례, 그로 인한 주가 변동, 관련 시장 규모 변화 예측 등)\n" +
-                "    - ‘~ㅂ니다.’로 서술하며, 내용은 1~3가지 정도로 압축하여 제공합니다.\n" +
-                "    - `positiveIndustries`, `negativeIndustries`, `positiveStocks`, `negativeStocks`에 해당하는 업종 이름 및 종목 이름이 `content` 내에 포함되어 설명되면 좋습니다.\n" +
+                "    - ‘~ㅂ니다.’로 간결하게 서술하며, 내용은 1~3가지 정도로 압축하여 제공합니다.\n" +
+                "    - `positiveIndustries`, `negativeIndustries`, `positiveStocks`, `negativeStocks`에 해당하는 업종 이름 및 종목 이름이 `content` 내에 포함되어 설명되면 좋습니다. (업종 코드는 포함하지 않습니다.)\n" +
                 "6. `positiveIndustries` / `negativeIndustries`: 정책 변화가 긍정적/부정적인 영향을 줄 수 있는 **대표·핵심 업종 코드** 리스트를 생성하며, 업종 이름은 포함하지 않습니다. 코드는 반드시 위에 제시된 '업종 분류 참고' 리스트에서 선택합니다.\n" +
                 "7. `positiveStocks` / `negativeStocks`: 정책 변화가 긍정적/부정적인 영향을 줄 수 있는 **대표·핵심 종목 이름** 리스트를 생성합니다. (실제 상장된 기업 이름)\n" +
                 "### **출력 지침**\n\n" +
