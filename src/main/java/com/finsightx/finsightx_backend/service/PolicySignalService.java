@@ -33,14 +33,16 @@ public class PolicySignalService {
     }
 
     @Transactional
-    public PolicySignal createPolicySignal(Long userId, String message, Long policyId, List<String> stockNames) {
+    public PolicySignal createPolicySignal(Long userId, String message, Long policyId, List<String> stockNames, OffsetDateTime date) {
         PolicySignal policySignal = new PolicySignal();
         policySignal.setUserId(userId);
         policySignal.setMessage(message);
         policySignal.setPolicyId(policyId);
-        policySignal.setCreatedAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")));
+        policySignal.setCreatedAt(date);
         policySignal.setIsRead(false);
         policySignal.setStockNames(stockNames);
+
+        System.out.println("------------------" + stockNames);
 
         return policySignalRepository.save(policySignal);
     }

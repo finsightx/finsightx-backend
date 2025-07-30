@@ -16,6 +16,9 @@ import com.google.genai.Client;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -43,6 +46,13 @@ public class LlmAnalysisService {
             "5510"
     );
 
+    private static final Map<String, Pattern> INDUSTRY_CODE_PATTERNS =
+            ALL_INDUSTRY_CODES.stream()
+                    .collect(Collectors.toMap(
+                            Function.identity(),
+                            code -> Pattern.compile("\\(" + Pattern.quote(code) + "\\)")
+                    ));
+
     @Value("${api.gemini.model}")
     private String geminiApiModel;
 
@@ -51,7 +61,8 @@ public class LlmAnalysisService {
                 "- 사용자로부터 정책 뉴스 기사를 입력받으면, 다음 지침에 따라 분석을 수행하고 지정된 JSON 형식으로 결과를 출력합니다.\n\n" +
                 "### **분석 목표 및 기본 원칙:**\n\n" +
                 "1. **정확한 정책 변화 판단**: 입력된 뉴스가 단순 정보 전달이 아닌, **법규, 제도, 지침, 예산 배정 등**에 있어 " +
-                "새로운 방향 제시 또는 수정이 포함된 **정책 변화**인지 명확하게 판단합니다.\n" +
+                "새로운 방향 제시 또는 수정이 포함된 **정책 변화**에 해당하며, **규모와 직접적인 경제적 파급 효과**를 고려할 때 " +
+                "주식 시장 전반 또는 특정 상장 기업의 주가에 **유의미한 영향을 미칠 만한 정책 변화**에 해당하는지 명확하고 엄격하게 판단합니다.\n" +
                 "2. **주가 영향 분석**: 판단된 정책 변화가 **직접적인 경제적 파급 효과와 규모**를 고려할 때, " +
                 "**주식 시장 전반 또는 특정 상장 기업의 주가에 유의미한 영향을 미칠 만한 변화**인지 심층적으로 분석합니다.\n" +
                 "3. **객관적이고 근거 기반 분석**: 정책 변화의 잠재적 영향을 분석할 때는 **과거의 유사 사례, 관련 산업의 특성, " +
@@ -65,7 +76,7 @@ public class LlmAnalysisService {
                 "- 4020: 증권\n- 4030: 다각화된금융\n- 4040: 보험\n- 4050: 부동산\n- 4510: 소프트웨어와서비스\n- 4520: 기술하드웨어와장비\n" +
                 "- 4530: 반도체와반도체장비\n- 4535: 전자와 전기제품\n- 4540: 디스플레이\n- 5010: 전기통신서비스\n- 5020: 미디어와엔터테인먼트\n- 5510: 유틸리티\n\n" +
                 "### **분석할 항목 및 내용 지침:**\n\n" +
-                "1. `isPolicyChange`: 뉴스 기사를 바탕으로 정책 변화 여부를 판단하며, 아래 기준을 따릅니다.\n" +
+                "1. `isPolicyChange`: 뉴스 기사를 바탕으로 주가에 유의미한 정책 변화 여부를 판단하며, 아래 기준을 모두 충족해야 합니다.\n" +
                 "- **판단 기준**:\n" +
                 "    1. 단순한 정보 전달이 아닌, **법규, 제도, 지침, 예산 배정 등**에 있어 **새로운 방향이나 수정**이 있는지 명확하게 판단합니다.\n" +
                 "    2. **규모와 직접적인 경제적 파급 효과**를 고려할 때, 주식 시장 전반 또는 특정 상장 기업의 주가에 **유의미한 영향을 미칠 만한 정책 변화**인지 판단합니다.\n" +
@@ -83,7 +94,7 @@ public class LlmAnalysisService {
                 "- 모든 결과는 **JSON 형식**으로 출력하며, 추가적인 설명이나 서론/결론 없이 JSON 객체만 반환합니다.\n" +
                 "- JSON 필드명은 정확히 위에서 지정된 이름을 사용합니다.\n" +
                 "- 값이 없는 필드는 `null`이 아닌, 빈 리스트 (`[]`) 또는 빈 문자열 (`\"\"`)로 처리합니다. " +
-                "단, `isPolicyChange`가 `false`일 때는 `policyName`, `stage`, `summary`, `content`, `positiveIndustries`, `negativeIndustries`, `positiveStocks`, `negativeStocks`를 빈 리스트 (`[]`) 또는 빈 문자열 (`\"\"`)로 처리합니다.";
+                "단, `isPolicyChange`가 `false`일 때는 `stage`, `summary`, `content`, `positiveIndustries`, `negativeIndustries`, `positiveStocks`, `negativeStocks`를 빈 리스트 (`[]`) 또는 빈 문자열 (`\"\"`)로 처리합니다.";
 
         Content systemInstructionContent = Content.builder().parts(ImmutableList.of(Part.builder().text(systemPrompt).build())).build();
 
@@ -169,9 +180,20 @@ public class LlmAnalysisService {
         policyInfo.setStage(parsedInfo.getStage());
         policyInfo.setCreatedAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")));
         policyInfo.setSummary(parsedInfo.getSummary());
-        policyInfo.setContent(parsedInfo.getContent());
         policyInfo.setPositiveIndustries(parsedInfo.getPositiveIndustries());
         policyInfo.setNegativeIndustries(parsedInfo.getNegativeIndustries());
+
+        List<String> cleanedContent = parsedInfo.getContent().stream()
+                .map(contentItem -> {
+                    String modifiedContentItem = contentItem;
+                    for (Map.Entry<String, Pattern> entry : INDUSTRY_CODE_PATTERNS.entrySet()) {
+                        modifiedContentItem = entry.getValue().matcher(modifiedContentItem).replaceAll("");
+                    }
+                    return modifiedContentItem.trim();
+                })
+                .filter(contentItem -> !contentItem.isEmpty())
+                .toList();
+        policyInfo.setContent(cleanedContent);
 
         List<String> positiveStockCodes = parsedInfo.getPositiveStocks().stream()
                 .map(name -> stockNameToCodeMap.get(name.trim()))

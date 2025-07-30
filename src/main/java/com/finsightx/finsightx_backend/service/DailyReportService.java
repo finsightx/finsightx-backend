@@ -59,10 +59,10 @@ public class DailyReportService {
                 .map(PolicyInfo::getPolicyId)
                 .collect(Collectors.toList());
 
-        String title = LocalDate.now(ZoneOffset.ofHours(9)).format(DateTimeFormatter.ofPattern("M월 d일 일일 정책 리포트"));
+        String title = date.atTime(21, 0, 0).atOffset(ZoneOffset.ofHours(9)).format(DateTimeFormatter.ofPattern("M월 d일 일일 정책 리포트"));
 
         DailyReport report = new DailyReport();
-        report.setCreatedAt(OffsetDateTime.now(ZoneOffset.ofHours(9)));
+        report.setCreatedAt(date.atTime(21, 0, 0).atOffset(ZoneOffset.ofHours(9)));
         report.setTitle(title);
         report.setPolicies(policyIds);
 
