@@ -42,8 +42,6 @@ public class PolicySignalService {
         policySignal.setIsRead(false);
         policySignal.setStockNames(stockNames);
 
-        System.out.println("------------------" + stockNames);
-
         return policySignalRepository.save(policySignal);
     }
 

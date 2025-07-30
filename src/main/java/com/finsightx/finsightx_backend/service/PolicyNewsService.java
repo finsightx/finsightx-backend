@@ -57,7 +57,6 @@ public class PolicyNewsService {
     private Map<String, Stock> allStocksMap;
     private Map<String, String> stockCodeToIndustryCodeMap;
     private Map<String, String> stockCodeToNameMap;
-    private Map<String, String> industryCodeToNameMap;
 
     @jakarta.annotation.PostConstruct
     public void initStockMaps() {
@@ -69,9 +68,6 @@ public class PolicyNewsService {
                 .collect(Collectors.toMap(Stock::getStockCode, Stock::getIndustryCode));
         stockCodeToNameMap = allStocks.stream()
                 .collect(Collectors.toMap(Stock::getStockCode, Stock::getStockName));
-        industryCodeToNameMap = allStocks.stream()
-                .collect(Collectors.toMap(Stock::getIndustryCode, Stock::getIndustryName, (existing, replacement) -> existing));
-        log.info("Stock data maps initialized with {} stocks.", allStocks.size());
     }
 
     private PolicyNewsApiResponse fetchPolicyNewsFromApi(LocalDate startDate, LocalDate endDate) {
@@ -273,29 +269,16 @@ public class PolicyNewsService {
         final Set<String> policyPositiveStockCodes = Optional.ofNullable(policyInfo.getPositiveStocks()).orElse(Collections.emptyList()).stream().collect(Collectors.toSet());
         final Set<String> policyNegativeStockCodes = Optional.ofNullable(policyInfo.getNegativeStocks()).orElse(Collections.emptyList()).stream().collect(Collectors.toSet());
 
-//        Set<String> allRelatedStockCodes = Stream.concat(
-//                        policyPositiveStockCodes.stream(),
-//                        policyNegativeStockCodes.stream())
-//                .collect(Collectors.toSet());
-//        Map<String, String> stockCodeToNameMap = Collections.emptyMap();
-//        if (!allRelatedStockCodes.isEmpty()) {
-//            stockCodeToNameMap = stockService.getStocksByStockCodeIn(new ArrayList<>(allRelatedStockCodes)).stream()
-//                    .collect(Collectors.toMap(Stock::getStockCode, Stock::getStockName));
-//        }
-
         for (User user : allUsers) {
             List<PortfolioItem> userPortfolio = user.getPortfolio();
             if (userPortfolio == null || userPortfolio.isEmpty()) {
                 continue;
             }
 
-            // 사용자 보유 종목 코드들
             final Set<String> userPortfolioStockCodes = userPortfolio.stream()
                     .map(PortfolioItem::getStockCode)
                     .collect(Collectors.toSet());
 
-
-            // PolicySignal 메시지 및 저장될 종목 이름을 모으는 Set (중복 제거, 순서 유지)
             Set<String> userImpactStockNamesForSignal = new LinkedHashSet<>();
 
             Set<String> positiveImpactStockCodes = userPortfolioStockCodes.stream()
@@ -316,59 +299,35 @@ public class PolicyNewsService {
                     }
                 }
             }
-            // 모든 영향 종목의 이름을 finalUserImpactStockNames 에 추가
-            // (PolicySignal에 저장될 최종 종목 이름 리스트)
+
             Stream.concat(positiveImpactStockCodes.stream(), negativeImpactStockCodes.stream())
-                    .distinct() // 직접 영향과 산업 영향에서 중복 제거
+                    .distinct()
                     .map(stockCodeToNameMap::get)
                     .filter(Objects::nonNull)
                     .forEach(userImpactStockNamesForSignal::add);
 
             List<String> finalUserImpactStockNames = new ArrayList<>(userImpactStockNamesForSignal);
 
-
-//            // 1. 정책에 직접 언급된 종목 중 사용자 보유 종목
-//            for (String userStockCode : userPortfolioStockCodes) {
-//                if (policyPositiveStockCodes.contains(userStockCode) || policyNegativeStockCodes.contains(userStockCode)) {
-//                    Optional.ofNullable(allStocksMap.get(userStockCode))
-//                            .map(Stock::getStockName)
-//                            .ifPresent(userImpactStockNamesForSignal::add);
-//                }
-//
-//                String industryCode = stockCodeToIndustryCodeMap.get(userStockCode); // 미리 만들어둔 맵 활용
-//                if (industryCode != null) {
-//                    if (policyPositiveIndustryCodes.contains(industryCode) || policyNegativeIndustryCodes.contains(industryCode)) {
-//                        Optional.ofNullable(allStocksMap.get(userStockCode))
-//                                .map(Stock::getStockName)
-//                                .ifPresent(userImpactStockNamesForSignal::add);
-//                    }
-//                }
-//            }
-
-            // 최종적으로 PolicySignal에 저장할 종목 이름 리스트
-//            List<String> finalUserImpactStockNames = new ArrayList<>(userImpactStockNamesForSignal);
-
-
             if (!finalUserImpactStockNames.isEmpty()) {
-                // 메시지 생성 시에는 여전히 종목 코드 리스트를 기반으로 createPolicySignalMessage 호출
-                // (이 메서드는 내부에서 종목 코드를 이름으로 변환)
                 String message = createPolicySignalMessage(
                         new ArrayList<>(positiveImpactStockCodes),
                         new ArrayList<>(negativeImpactStockCodes),
-                        policyInfo.getStage() // 이제 stockCodeToNameMap은 전역 맵을 사용
+                        policyInfo.getStage()
                 );
+
+                if (message.isEmpty()) return;
 
                 PolicySignal createdSignal = policySignalService.createPolicySignal(
                         user.getUserId(),
                         message,
                         policyInfo.getPolicyId(),
-                        finalUserImpactStockNames, // 여기에 산업군 관련 종목 이름까지 포함된 리스트 전달
+                        finalUserImpactStockNames,
                         policyInfo.getCreatedAt()
                 );
                 log.info("PolicySignal created for user {}: ID {}, Policy ID {}", user.getUserId(), createdSignal.getPolicySignalId(), createdSignal.getPolicyId());
 
                 String notificationTitle = "새로운 정책 시그널";
-                String notificationBody = createNotificationBody(finalUserImpactStockNames); // 이제 이름 리스트만 받음
+                String notificationBody = createNotificationBody(finalUserImpactStockNames);
 
                 log.info("Push notification sent to user {}.", user.getUserId());
             } else {
@@ -382,10 +341,9 @@ public class PolicyNewsService {
     private String createPolicySignalMessage(List<String> positiveStockCodes, List<String> negativeStockCodes, String stage) {
         StringBuilder messageBuilder = new StringBuilder("귀하의 보유 종목 중 ");
 
-        // 종목 코드를 이름으로 변환하는 헬퍼 함수
         Function<List<String>, List<String>> getStockNamesFromCodes = codes ->
                 codes.stream()
-                        .map(stockCodeToNameMap::get) // 전역 stockCodeToNameMap 사용
+                        .map(stockCodeToNameMap::get)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
 
